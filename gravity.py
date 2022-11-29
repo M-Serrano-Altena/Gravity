@@ -8,7 +8,15 @@ from math import *
 import random
 
 class ball:
+  dt = 0.01
   counter = 0
+
+  # col stands for collision
+  col_count_x = 0
+  col_count_y = 0
+  vx_col = 0
+  vy_col = 0
+
   particle_num = 0
   xmin_box = 0
   xmax_box = 10
@@ -16,7 +24,7 @@ class ball:
   ymax_box = 10
 
   particles = []
-  Nparticles = 20
+  Nparticles = 10
   circles = []
 
   fig, ax = plt.subplots()
@@ -35,6 +43,9 @@ class ball:
     self.m = pi * self.r**2
     self.vx = self.v*cos(self.a)
     self.vy = self.v*sin(self.a)
+    # the accelaration in the x and y direction
+    self.ax = 0
+    self.ay = -5
 
     if self.particle_num == 0:
       self.plot = plt.Circle((self.x, self.y), radius = self.r, fc = 'red')
@@ -52,26 +63,78 @@ class ball:
 
 
   def update(self):
-    dt = 0.01
+    ball.counter += 1
+    collisionx = False
+    collisiony = False
 
     # update atributes
-    self.x += self.vx * dt
-    self.y += self.vy * dt
+    self.x += self.vx * ball.dt
+    self.y += self.vy * ball.dt
+
+    if self.vx != 0:
+      self.vx += self.ax * ball.dt
+
+    if self.vy != 0:
+      self.vy += self.ay * ball.dt
 
     # when hitting a wall; ± radius so that the bounce happens at the surface of the particle
     if self.x <= ball.xmin_box + self.r: 
         self.vx = - self.vx
         self.x += 0.01
+        collisionx = True
     elif self.x >= ball.xmax_box - self.r:
         self.vx = - self.vx
         self.x -= 0.01
+        collisionx = True
 
     if self.y <= ball.ymin_box + self.r: 
         self.vy = - self.vy
         self.y += 0.01
+        collisiony = True
     elif self.y >= ball.ymax_box - self.r:
         self.vy = - self.vy
         self.y -= 0.01
+        collisiony = True
+
+    # collision with walls is not fully inelastic
+    if collisionx:
+      collisionx = False
+
+      # so that a ball that should be at rest is actually at rest
+      if ball.counter != ball.col_count_x + 1:
+
+        if self.vx == ball.vx_col and ball.counter == ball.col_count_x + 2:
+          self.vx = 0
+          ball.counter = 0
+
+        ball.col_count_x = ball.counter
+        ball.vx_col = self.vx
+
+      if self.vx > 0:
+        self.vx -= 1.25
+
+      elif self.vx < 0:
+        self.vx += 1.25
+
+
+    if collisiony:
+      collisiony = False
+
+      # so that a ball that should be at rest is actually at rest
+      if ball.counter != ball.col_count_y + 1:
+
+        if round(self.vy, 2) == round(ball.vy_col, 2) and ball.counter == ball.col_count_y + 2:
+          self.vy = 0
+          ball.counter = 0
+
+        ball.col_count_y = ball.counter
+        ball.vy_col = self.vy
+
+      if self.vy > 0:
+        self.vy -= 1.25
+
+      elif self.vx < 0:
+        self.vy += 1.25
 
     # for collisions
     for num2 in range(self.particle_num + 1, ball.Nparticles):
@@ -84,9 +147,9 @@ class ball:
 
       if d <= self.r + ball.particles[num2].r:
 
-          # a is speed of particle 1, b the speed of particle 2
-          ax = self.vx
-          ay = self.vy
+          # c is speed of particle 1, b the speed of particle 2
+          cx = self.vx
+          cy = self.vy
           bx = ball.particles[num2].vx
           by = ball.particles[num2].vy
 
@@ -102,21 +165,21 @@ class ball:
           uty = unx
 
           # magnitude of the vectors before collision
-          an = ax*unx + ay*uny
+          cn = cx*unx + cy*uny
           bn = bx*unx + by*uny
 
-          at = ax*utx + ay*uty
+          ct = cx*utx + cy*uty
           bt = bx*utx + by*uty
 
           # magnitude vectors after collision (f --> final)
-          an_f = (an*(m1 - m2) + 2 * m2 * bn) / (m1 + m2)
-          bn_f = (bn*(m2 - m1) + 2 * m1 * an) / (m1 + m2)
-          at_f = at
+          cn_f = (cn*(m1 - m2) + 2 * m2 * bn) / (m1 + m2)
+          bn_f = (bn*(m2 - m1) + 2 * m1 * cn) / (m1 + m2)
+          ct_f = ct
           bt_f = bt
 
           # for particle 1
-          self.vx = an_f * unx + at_f * utx
-          self.vy = an_f * uny + at_f * uty
+          self.vx = cn_f * unx + ct_f * utx
+          self.vy = cn_f * uny + ct_f * uty
 
           # for particle 2
           ball.particles[num2].vx = bn_f * unx + bt_f * utx
@@ -139,12 +202,14 @@ class ball:
           else:
             self.y += 0.005
             ball.particles[num2].y -= 0.005
+
+
+    # gravitational pull
+    # self.ay += 0.1
           
 
   @staticmethod
   def animate(i_time):
-    # om er voor te zorgen dat bepaalde dingen in de update functie maar 1 keer gerunt worden per animate functie
-    ball.counter = 0
 
     for num in range(ball.Nparticles):
       ball.particles[num].update()
