@@ -24,7 +24,7 @@ class ball:
   ymax_box = 10
 
   particles = []
-  Nparticles = 10
+  Nparticles = 1
   circles = []
 
   fig, ax = plt.subplots()
@@ -36,16 +36,16 @@ class ball:
   def __init__(self):
     self.x = random.randint(ball.xmin_box + 1, ball.xmax_box - 1) 
     self.y = random.randint(ball.ymin_box + 1, ball.ymax_box - 1)
-    # random angle the balls start at
-    self.a = random.uniform(0, 2 * pi)
+    
     self.v = random.uniform(0.5, 1.5)
     self.r = random.uniform(0.15, 0.5)
     self.m = pi * self.r**2
-    self.vx = self.v*cos(self.a)
-    self.vy = self.v*sin(self.a)
+    self.vx = random.uniform(-1.25, 1.25)
+    self.vy = random.uniform(-1.25, 1.25)
     # the accelaration in the x and y direction
+    self.a = random.uniform(0.5, 1)
     self.ax = 0
-    self.ay = -5
+    self.ay = 0
 
     if self.particle_num == 0:
       self.plot = plt.Circle((self.x, self.y), radius = self.r, fc = 'red')
@@ -77,6 +77,21 @@ class ball:
     if self.vy != 0:
       self.vy += self.ay * ball.dt
 
+    # orbits center of the box
+    d_center_x = self.x - (ball.xmax_box - ball.xmin_box)/2
+    d_center_y = self.y - (ball.ymax_box - ball.ymin_box)/2
+    d_center = sqrt(d_center_x**2 + d_center_y**2)
+
+    # unit vector
+    self.uax = -d_center_x / d_center
+    self.uay = -d_center_y / d_center
+
+    if d_center > 1:
+      self.a = 1/d_center**2
+
+    self.ax = self.a * self.uax
+    self.ay = self.a * self.uay
+
     # when hitting a wall; ± radius so that the bounce happens at the surface of the particle
     if self.x <= ball.xmin_box + self.r: 
         self.vx = - self.vx
@@ -101,9 +116,9 @@ class ball:
       collisionx = False
 
       # so that a ball that should be at rest is actually at rest
-      if ball.counter != ball.col_count_x + 1:
+      if ball.counter >= ball.col_count_x + 10 or ball.counter == ball.col_count_x:
 
-        if self.vx == ball.vx_col and ball.counter == ball.col_count_x + 2:
+        if round(self.vx, 2) == round(ball.vx_col, 2) and ball.counter >= ball.col_count_x + 4:
           self.vx = 0
           ball.counter = 0
 
@@ -111,19 +126,20 @@ class ball:
         ball.vx_col = self.vx
 
       if self.vx > 0:
-        self.vx -= 1.25
+        self.vx -= 0.25
 
       elif self.vx < 0:
-        self.vx += 1.25
+        self.vx += 0.25
 
 
     if collisiony:
       collisiony = False
+      print(self.vy, ball.vy_col)
 
       # so that a ball that should be at rest is actually at rest
-      if ball.counter != ball.col_count_y + 1:
+      if ball.counter >= ball.col_count_y + 50 or ball.counter == ball.col_count_y:
 
-        if round(self.vy, 2) == round(ball.vy_col, 2) and ball.counter == ball.col_count_y + 2:
+        if round(self.vy, 2) == round(ball.vy_col, 2) and ball.counter >= ball.col_count_y + 20:
           self.vy = 0
           ball.counter = 0
 
@@ -131,10 +147,10 @@ class ball:
         ball.vy_col = self.vy
 
       if self.vy > 0:
-        self.vy -= 1.25
+        self.vy -= 0.25
 
       elif self.vx < 0:
-        self.vy += 1.25
+        self.vy += 0.25
 
     # for collisions
     for num2 in range(self.particle_num + 1, ball.Nparticles):
