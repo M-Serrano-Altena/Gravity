@@ -34,7 +34,6 @@ class ball:
     self.x = random.randint(ball.xmin_box + 1, ball.xmax_box - 1) 
     self.y = random.randint(ball.ymin_box + 1, ball.ymax_box - 1)
     
-    self.v = random.uniform(0.5, 1.5)
     self.r = random.uniform(0.05, 0.75)
     self.m = pi * (self.r * 3)**2 
     self.vx = random.uniform(-1.25, 1.25)
