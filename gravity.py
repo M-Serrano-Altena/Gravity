@@ -36,7 +36,7 @@ class ball:
     
     self.v = random.uniform(0.5, 1.5)
     self.r = random.uniform(0.05, 0.75)
-    self.m = pi * (self.r)**2 * 10
+    self.m = pi * (self.r * 3)**2 
     self.vx = random.uniform(-1.25, 1.25)
     self.vy = random.uniform(-1.25, 1.25)
     # the accelaration in the x and y direction
